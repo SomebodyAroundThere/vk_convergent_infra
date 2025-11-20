@@ -1,0 +1,14 @@
+[Unit]
+Description=Simple Flask App
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/simple-webapp-flask
+ExecStart=/opt/simple-webapp-flask/venv/bin/python3 /opt/simple-webapp-flask/application.py
+Restart=on-failure
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

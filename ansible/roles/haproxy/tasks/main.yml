@@ -1,0 +1,39 @@
+- name: Install haproxy and certbot
+  apt:
+    name:
+      - haproxy
+      - certbot
+      - python3-certbot
+    state: present
+    update_cache: yes
+
+
+# Fallback: generate self-signed certs if domain missing or certbot failed
+- name: Create self-signed cert directory
+  file:
+    path: /etc/haproxy/certs
+    state: directory
+    mode: '0755'
+
+- name: Generate self-signed cert (if Let's Encrypt not used)
+  command: >
+    openssl req -x509 -nodes -days 365 -newkey rsa:2048
+    -keyout /etc/haproxy/certs/self.crt.key -out /etc/haproxy/certs/self.crt
+    -subj "/CN={{ haproxy_domain | default('haproxy.local') }}"
+  args:
+    creates: /etc/haproxy/certs/self.crt
+  notify: Restart haproxy
+
+- name: Render haproxy config
+  template:
+    src: haproxy.cfg.j2
+    dest: /etc/haproxy/haproxy.cfg
+  notify: Restart haproxy
+
+- name: Ensure haproxy enabled
+  systemd:
+    name: haproxy
+    enabled: yes
+    state: restarted
+
+

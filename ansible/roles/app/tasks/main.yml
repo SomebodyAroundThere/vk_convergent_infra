@@ -1,0 +1,70 @@
+- name: Установить Python3, pip и git
+  apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  loop:
+    - python3
+    - python3-pip
+    - git
+
+- name: Clone app repo
+  git:
+    repo: https://github.com/mmumshad/simple-webapp-flask.git
+    dest: /opt/simple-webapp-flask
+    version: master
+    force: yes
+
+- name: pip install requirements
+  pip:
+    requirements: /opt/simple-webapp-flask/requirements.txt
+    executable: pip3
+
+- name: Создать config.py из шаблона
+  template:
+    src: config.py.j2
+    dest: /opt/simple-webapp-flask/config.py
+    owner: ubuntu
+    group: ubuntu
+    mode: '0644'
+
+- name: Заменить порт в app.py на 5000
+  lineinfile:
+    path: /opt/simple-webapp-flask/app.py
+    regexp: "port=[0-9]+"
+    line: "    app.run(host='0.0.0.0', port=5000)"
+    backrefs: yes
+
+- name: Разрешить порт 5000 в UFW для сети 192.168.200.0/24
+  ufw:
+    rule: allow
+    port: 5000
+    proto: tcp
+    from_ip: 192.168.200.0/24
+
+- name: Создать systemd-сервис для Flask
+  copy:
+    dest: /etc/systemd/system/simpleapp.service
+    content: |
+      [Unit]
+      Description=Simple Flask App
+      After=network.target
+
+      [Service]
+      User=ubuntu
+      WorkingDirectory=/opt/simple-webapp-flask
+      ExecStart=/usr/bin/python3 /opt/simple-webapp-flask/app.py
+      Restart=always
+
+      [Install]
+      WantedBy=multi-user.target
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Перезагрузить systemd и включить сервис
+  systemd:
+    daemon_reload: yes
+    name: simpleapp
+    enabled: yes
+    state: started

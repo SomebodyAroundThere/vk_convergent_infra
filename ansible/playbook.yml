@@ -1,0 +1,14 @@
+- hosts: all
+  become: yes
+  roles:
+    - hardening
+
+- hosts: app
+  become: yes
+  roles:
+    - app
+
+- hosts: haproxy
+  become: yes
+  roles:
+    - haproxy

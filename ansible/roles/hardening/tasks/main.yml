@@ -1,0 +1,54 @@
+---
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Install ufw and fail2ban
+  apt:
+    name:
+      - ufw
+      - fail2ban
+    state: present
+
+- name: Allow SSH from admin
+  ufw:
+    rule: allow
+    port: 22
+    proto: tcp
+    from_ip: "{{ lookup('env','ADMIN_CIDR') | default('0.0.0.0/0') }}"
+
+- name: Allow HTTP
+  ufw:
+    rule: allow
+    port: 80
+    proto: tcp
+
+- name: Allow HTTPS
+  ufw:
+    rule: allow
+    port: 443
+    proto: tcp
+
+- name: Enable ufw
+  ufw:
+    state: enabled
+
+- name: Deploy sshd config (disable password auth)
+  template:
+    src: templates/sshd_config.j2
+    dest: /etc/ssh/sshd_config
+    mode: '0644'
+  notify: Restart ssh
+
+- name: Deploy fail2ban sshd jail
+  copy:
+    dest: /etc/fail2ban/jail.d/ssh.conf
+    content: |
+      [sshd]
+      enabled = true
+      port    = ssh
+      filter  = sshd
+      logpath = /var/log/auth.log
+      maxretry = 5
+  notify: Restart fail2ban
