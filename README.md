@@ -66,7 +66,6 @@ vk_convergent_infra/
 │   ├── inventories
 │   │   └── hosts.ini
 │   ├── playbook.yml
-│   ├── README.md
 │   └── roles
 │       ├── app
 │       │   ├── tasks
