@@ -46,7 +46,7 @@ resource "vkcs_networking_secgroup_rule" "secgroup_rule_app1" {
   protocol          = "tcp"
   port_range_min    = 5000
   port_range_max    = 5000
-  remote_ip_prefix  = "192.168.200.0/24"
+  remote_group_id   = vkcs_networking_secgroup.secgroup_haproxy.id
   security_group_id = "${vkcs_networking_secgroup.secgroup_app.id}"
 }
 
@@ -60,6 +60,6 @@ resource "vkcs_networking_secgroup_rule" "secgroup_rule_db" {
   protocol          = "tcp"
   port_range_min    = 3306
   port_range_max    = 3306
-  remote_ip_prefix  = "192.168.200.0/24"
+  remote_group_id   = vkcs_networking_secgroup.secgroup_app.id
   security_group_id = "${vkcs_networking_secgroup.secgroup_db.id}"
 }
